@@ -38,7 +38,7 @@ def toggleBits(addr,bits):
 
 def getWord(addr):
     makeAndSendThing(4,addr,0)
-    # time.sleep(0.100)
+    time.sleep(0.050)
     return read()
 
 if __name__ == "__main__":

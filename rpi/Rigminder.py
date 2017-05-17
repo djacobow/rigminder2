@@ -68,7 +68,7 @@ class Device:
         keep_running = True
         while keep_running:
             if self.q.empty():
-                print('qF() refilling')
+                # print('qF() refilling')
                 for reg_name in self.reg_numbers:
                     x = (10,'read',reg_name)
                     self.q.put_nowait(x)
@@ -81,10 +81,10 @@ class Device:
         while keep_running:
             while True:
                 qi = yield from self.q.get()
-                print(qi)
                 if qi[1] == 'read':
                     reg_name = qi[2]
                     rv = wdog.getWord(self.reg_numbers[reg_name])
+                    print(reg_name)
                     self.printHex(rv)
                     if rv['cmd'] == 0:
                         self.device_status['registers'][reg_name] = {
@@ -92,9 +92,18 @@ class Device:
                             'last_update': datetime.datetime.now(),
                         }
                 elif qi[1] == 'write':
+                    print(qi)
                     reg_name = qi[2]
                     reg_val = qi[3]
                     wdog.setWord(self.reg_numbers[reg_name],reg_val)
+
+                    rv = wdog.getWord(self.reg_numbers[reg_name])
+                    self.printHex(rv)
+                    if rv['cmd'] == 0:
+                        self.device_status['registers'][reg_name] = {
+                            'value': rv['val'],
+                            'last_update': datetime.datetime.now(),
+                        }
 
                 yield from asyncio.sleep(0.05)
 
