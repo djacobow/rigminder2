@@ -45,9 +45,9 @@ var showStatus = function(d) {
         var mask = bp[0];
         var name = bp[1];
         var elemid = 'output_bits_' + bpid;
-        document.getElementById(elemid).checked = output_value & mask ? 'checked' : '';
+        document.getElementById(elemid).className = output_value & mask ? 'fake_button_checked' : 'fake_button_unchecked';
         elemid = 'mask_bits_' + bpid;
-        document.getElementById(elemid).checked = wdog_mask_value & mask ? 'checked' : '';
+        document.getElementById(elemid).className = wdog_mask_value & mask ? 'fake_button_checked' : 'fake_button_unchecked';
     }
 
     document.getElementById('timer_val').innerText = timer_value;
@@ -135,30 +135,32 @@ var resetTimer = function() {
 
 var doNothing = function() {};
 
-var changeResetMask = function(ev) {
+
+var changeReg = function(ev) {
+    ev.stopPropagation();
+    ev.preventDefault();
+
+    var do_resetmask = ev.target.id.match(/^mask_bits_/);
+    var group_name = do_resetmask ? 'mask_bits_' : 'output_bits_';
+
     var bpids = Object.keys(config.bitpositions);
     var ov = 0;
     bpids.forEach(function(bpid) {
-        var cbid = 'mask_bits_' + bpid;
+        var cbid = group_name + bpid;
         var msk  = config.bitpositions[bpid][0];
-        var set  = document.getElementById(cbid).checked;
+        var set  = document.getElementById(cbid).className == 'fake_button_checked';
         if (set) ov |=msk;
     });
 
-    postAndDo('/setresetmask',{set_val: ov}, doNothing);
-};
+    var was_checked   = ev.target.className == 'fake_button_checked';
+    var clicked_bpid  = ev.target.id.replace(group_name,'');
+    var clicked_msk   = config.bitpositions[clicked_bpid][0];
 
-var changeOutput = function(ev) {
-    var bpids = Object.keys(config.bitpositions);
-    var ov = 0;
-    bpids.forEach(function(bpid) {
-        var cbid = 'output_bits_' + bpid;
-        var msk  = config.bitpositions[bpid][0];
-        var set  = document.getElementById(cbid).checked;
-        if (set) ov |=msk;
-    });
+    if (was_checked) ov &= ~clicked_msk;
+    else             ov |= clicked_msk;
 
-    postAndDo('/setoutput',{set_val: ov}, doNothing);
+    console.log('ov: ' + ov);
+    postAndDo(do_resetmask ? '/setresetmask' : '/setoutput',{set_val: ov}, doNothing);
 };
 
 var fetchStatus = function() {
@@ -194,17 +196,22 @@ var createOutputCheckboxes = function() {
         var nelems = [];
         var tgtdiv = document.getElementById(groups[k][0]);
         bpids.forEach(function(bpid) {
-            var cb = document.createElement('input');
-            cb.type = 'checkbox';
+            var cb = document.createElement('div');
             cb.id = groups[k][1] + bpid;
-            cb.checked = '';
-            cb.addEventListener('change',k === 'outputs' ? changeOutput : changeResetMask);
-            var sp = document.createElement('span');
+            cb.className = 'fake_button_unchecked';
+            cb.addEventListener('click',changeReg);
+            cb.addEventListener('mouseover',function(ev) {
+                ev.target.style['border-color'] = 'white';
+            });
+            cb.addEventListener('mouseout',function(ev) {
+                ev.target.style['border-color'] = 'grey';
+            });
+            // var sp = document.createElement('span');
             var br = document.createElement('br');
-            sp.innerText = config.bitpositions[bpid][1];
+            cb.innerText = config.bitpositions[bpid][1];
             nelems.push(cb);
-            nelems.push(sp);
-            nelems.push(br);
+            // nelems.push(sp);
+            // nelems.push(br);
         });
         nelems.forEach(function(ne) { tgtdiv.appendChild(ne); });
     });
