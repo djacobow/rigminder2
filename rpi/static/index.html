@@ -1,0 +1,71 @@
+<html>
+    <head>
+        <title>Remote Rig Watchdog</title>
+        <link rel="stylesheet" href="default.css">
+    </head>
+    <body>
+        <h3>Remote Rig Watchdog</h3>
+        <div id=wdog_statusdiv>
+            <p>Current Status</p>
+            <table width="90%">
+                <tr>
+                    <td width="15%">Output State</td>
+                    <td width="85%" id="outputs_val">
+                    </td>
+                </tr>
+                <tr>
+                    <td>Timer State</td>
+                    <td>
+                        <div id="timer_val"></div>
+                        <div class="all_bar" id="timer_all">
+                            <div class="val_bar" id="timer_bar"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Watchdog Reset Mask</td>
+                    <td id="reset_mask_val"></td>
+                </tr>
+                <tr>
+                    <td>Input Voltage</td>
+                    <td>
+                        <div id="vin_val"></div>
+                        <div class="all_bar" id="vin_all">
+                            <div class="val_bar" id="vin_bar"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Output Voltage</td>
+                    <td>
+                        <div id="vout_val"></div>
+                        <div class="all_bar" id="vout_all">
+                            <div class="val_bar" id="vout_bar"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="wdog_ctrl_div">
+            <p>Controls</p>
+            <table>
+                <tr>
+                    <td>Reset Watchdog Now</td>
+                    <td>
+                        <input type="button" id="wdog_reset" value="Reset Watchdog"><br>
+                        Timer Reset Value: <input type="number" id="wdog_reset_timer_val" min="1" max="65535" value="300">
+                        <div id="last_update_result"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Automatic Timer Reset</td>
+                    <td>
+                        Enable Auto Reset<input type="checkbox" id="wdog_enable_auto" checked="checked"><br>
+                        Ping when<input id="wdog_ping_time" type="number" min="10" max="65535" value="15">seconds remain.
+            </table>
+        </div>
+        <pre id="dbg">
+        </pre>
+        <script type="application/javascript" src="top.js"></script>
+    </body>
+</html>
