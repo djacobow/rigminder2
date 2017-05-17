@@ -1,4 +1,4 @@
-# RigWatcher
+# RigMinder
 
 Hardware, Firmware, and Server-ware implementation of a power-off watchdog
 for amateur radio gear. This is interesting for hams that want to operate
