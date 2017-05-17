@@ -12,8 +12,8 @@ import time
 import asyncio
 import itertools
 import random
-#import Rigminder as rm
-import FakeRigminder as rm
+import Rigminder as rm
+#import FakeRigminder as rm
 
 
 MAX_QUERY_LEN = 1024

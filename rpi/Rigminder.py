@@ -72,7 +72,7 @@ class Device:
                 for reg_name in self.reg_numbers:
                     x = (10,'read',reg_name)
                     self.q.put_nowait(x)
-            yield from asyncio.sleep(1)
+            yield from asyncio.sleep(2)
 
     @asyncio.coroutine
     def queueHandler(self):
@@ -96,7 +96,7 @@ class Device:
                     reg_val = qi[3]
                     wdog.setWord(self.reg_numbers[reg_name],reg_val)
 
-                yield from asyncio.sleep(0.5)
+                yield from asyncio.sleep(0.05)
 
  
 
