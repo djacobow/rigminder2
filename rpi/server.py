@@ -34,7 +34,7 @@ class myHandler(BaseHTTPRequestHandler):
         '/icon-logo.png': ('image/png',              'static/icon-logo.png'),
         '/index.html':    ('text/html',              'static/index.html'),
         '/top.js':        ('application/javascript', 'static/top.js'),
-        '/default.css':   ('application/javascript', 'static/default.css'),
+        '/default.css':   ('text/css',               'static/default.css'),
         '/':              ('text/html',              'static/index.html'),
     }
 
@@ -151,7 +151,6 @@ class myHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         global MAX_QUERY_LEN
 
-        print('GET')
         odata = { 'result': 'FAIL' }
         rcode = 500
 
