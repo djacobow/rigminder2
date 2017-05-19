@@ -16,19 +16,27 @@ div.val_bar {
     height: 30px;
 }
 
-div.fake_button_unchecked {
+div.fake_button {
     padding: 10px;
     margin: 5px;
     border: 3px solid grey;
     width: 200px;
     border-color: grey;
+
+}
+div.fake_button_unchecked {
     background-color: red;
 }
 
 div.fake_button_checked {
-    padding: 10px;
-    margin: 5px;
-    border: 3px solid grey;
-    width: 200px;
     background-color: green;
+}
+
+div.fake_button_unknown {
+    background-color: yellow;
+}
+
+body.out_of_contact {
+    color: #404040;
+     background: #303030;
 }

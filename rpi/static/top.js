@@ -2,9 +2,9 @@
 var config = {
     bitpositions: {
         'dc':  [ 0x1, '12V DC output' ],
-        'ac':  [ 0x8, 'AC Triac output' ],
-        'led': [ 0x2, 'LED Indicator' ],
+        'ac':  [ 0x2, 'AC Triac output' ],
         'oc':  [ 0x4, 'Isolated Open Collector Output' ],
+        'led': [ 0x8, 'LED Indicator' ],
     },
     voltage_ratios: {
         vin: 14.07 / 959,
@@ -33,21 +33,36 @@ var colorizeBar = function(elem,val,color,lo,locolor,hi,hicolor) {
 var showStatus = function(d) {
     var fetch_time = new Date();
     var status_time = new Date(d.last_read);
-    var wdog_mask_value = d.registers.REG_WDOG_MASK.value;
-    var output_value = d.registers.REG_OUTPUT.value;
     var timer_value = d.registers.REG_TIMER.value;
     document.getElementById('dbg').innerText = JSON.stringify(d,null,2);
 
+    var groups = {
+        'output_bits_': 'REG_OUTPUT',
+        'mask_bits_': 'REG_WDOG_MASK',
+    };
     var bpids = Object.keys(config.bitpositions);
     for (var i=0; i<bpids.length; i++) {
         var bpid = bpids[i];
         var bp   = config.bitpositions[bpid];
         var mask = bp[0];
         var name = bp[1];
-        var elemid = 'output_bits_' + bpid;
-        document.getElementById(elemid).className = output_value & mask ? 'fake_button_checked' : 'fake_button_unchecked';
-        elemid = 'mask_bits_' + bpid;
-        document.getElementById(elemid).className = wdog_mask_value & mask ? 'fake_button_checked' : 'fake_button_unchecked';
+        groupnames = Object.keys(groups);
+        groupnames.forEach(function(groupn) {
+            var rname = groups[groupn];
+            var value = d.registers[rname].value;
+            var elemid = groupn + bpid;
+            var outelem = document.getElementById(elemid)
+            var bit_is_set = (value & mask) ? 'sure' : 'nope';
+            outelem.setAttribute('bit_is_set', bit_is_set);
+                outelem.classList.remove('fake_button_unknown'); 
+            if (bit_is_set == 'sure') {
+                outelem.classList.add('fake_button_checked'); 
+                outelem.classList.remove('fake_button_unchecked'); 
+            } else {
+                outelem.classList.remove('fake_button_checked'); 
+                outelem.classList.add('fake_button_unchecked'); 
+            }
+        });
     }
 
     document.getElementById('timer_val').innerText = timer_value;
@@ -60,7 +75,7 @@ var showStatus = function(d) {
 
     Object.keys(voltages).forEach(function(v) {
         var value = d.registers[voltages[v]].value & 0x3ff;
-        var volts = Math.floor((value * config.voltage_ratios[v]) * 100) / 100;
+        var volts = Math.floor((value * config.voltage_ratios[v]) * 10) / 10;
         var bdiv  = document.getElementById(v + '_bar');
         colorizeBar(bdiv,volts,
             'green',
@@ -100,9 +115,9 @@ var postAndDo = function(url,data,cb) {
     var loadListener = function() {
         if (xhr.status === 200) {
             var d = JSON.parse(xhr.responseText);
-            cb(d);
+            return cb(d);
         } else {
-            cb({status: xhr.status, msg: 'post fail at ' + url});
+            return cb({status: xhr.status, msg: 'post fail at ' + url});
         }
     };
     xhr.timeout = 5000;
@@ -139,44 +154,45 @@ var doNothing = function() {};
 var changeReg = function(ev) {
     ev.stopPropagation();
     ev.preventDefault();
-
+    ev.target.classList.remove('fake_button_unchecked');
+    ev.target.classList.remove('fake_button_checked');
+    ev.target.classList.add('fake_button_unknown');
     var do_resetmask = ev.target.id.match(/^mask_bits_/);
     var group_name = do_resetmask ? 'mask_bits_' : 'output_bits_';
 
-    var bpids = Object.keys(config.bitpositions);
-    var ov = 0;
-    bpids.forEach(function(bpid) {
-        var cbid = group_name + bpid;
-        var msk  = config.bitpositions[bpid][0];
-        var set  = document.getElementById(cbid).className == 'fake_button_checked';
-        if (set) ov |=msk;
-    });
-
-    var was_checked   = ev.target.className == 'fake_button_checked';
+    var was_checked   = ev.target.getAttribute('bit_is_set');
     var clicked_bpid  = ev.target.id.replace(group_name,'');
     var clicked_msk   = config.bitpositions[clicked_bpid][0];
+    var ov = clicked_msk;
+    if (was_checked == 'sure') ov = 0;
 
-    if (was_checked) ov &= ~clicked_msk;
-    else             ov |= clicked_msk;
-
-    console.log('ov: ' + ov);
-    postAndDo(do_resetmask ? '/setresetmask' : '/setoutput',{set_val: ov}, doNothing);
+    postAndDo(do_resetmask ? '/setresetmask' : '/setoutput',
+              {set_val: ov, msk_val: clicked_msk}, function(pr) {
+ 
+        setTimeout(fetchStatus,200);
+    });
 };
 
 var fetchStatus = function() {
     var xhr = new XMLHttpRequest();
     var loadListener = function() {
         if (xhr.status === 200) {
+            document.getElementsByTagName('body')[0].classList.remove('out_of_contact');
             try {
                 var d = JSON.parse(xhr.responseText);
                 showStatus(d);
             } catch (e) {
                 console.warn('That went poorly.');
                 console.warn(xhr.responseText);
+                document.getElementById('dbg').innerText = xhr.responseText;
             }
         }
     };
     xhr.addEventListener('load',loadListener);
+    xhr.addEventListener('error',function(e) {
+                document.getElementById('dbg').innerText = e.toString();
+                document.getElementsByTagName('body')[0].classList.add('out_of_contact');
+    });
     xhr.open('GET','/status');
     xhr.send();
 };
@@ -198,7 +214,9 @@ var createOutputCheckboxes = function() {
         bpids.forEach(function(bpid) {
             var cb = document.createElement('div');
             cb.id = groups[k][1] + bpid;
-            cb.className = 'fake_button_unchecked';
+            cb.classList.add('fake_button');
+            cb.classList.add('fake_button_unknown');
+            cb.setAttribute('bit_is_set','nope');
             cb.addEventListener('click',changeReg);
             cb.addEventListener('mouseover',function(ev) {
                 ev.target.style['border-color'] = 'white';
