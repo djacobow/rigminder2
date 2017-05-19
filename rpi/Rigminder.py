@@ -5,13 +5,13 @@ import datetime
 import random
 import math
 import time
-import dogcmds as wdog
+import rigmi2c
 import asyncio
 
 class Device:
     def __init__(self):
         print('RealDevice __init__')
-        wdog.init(0.00250)
+        self.r = rigmi2c.rigmi2c()
         self.inited = True
         self.q = asyncio.PriorityQueue()
 
@@ -23,16 +23,8 @@ class Device:
            'REG_TIMER': 7,
         }
 
-        wdog.setWord(self.reg_numbers['REG_TIMER'],60)
-        wdog.setWord(self.reg_numbers['REG_OUTPUT'],0xffff)
-
-        self.bitmasks = {
-            'OUT_MASK_DC': 0x1,
-            'OUT_MASK_AC': 0x8,
-            'OUT_MASK_LED': 0x2,
-            'OUT_MASK_OC': 0x4,
-        }
-
+        self.r.setWord(self.reg_numbers['REG_TIMER'],60)
+        self.r.setWord(self.reg_numbers['REG_OUTPUT'],0xffff)
         self.device_status = {
             'count': 0,
             'registers': {
@@ -46,18 +38,15 @@ class Device:
 
 
     def resetTimer(self,tval):
-        self.q.put_nowait((0,'write','REG_TIMER',tval))
-        self.q.put_nowait((0,'read','REG_TIMER'))
+        self.q.put_nowait((0,'write','REG_TIMER',tval,None))
         return { 'result': 'OK' }
 
-    def setOutput(self,oval):
-        self.q.put_nowait((1,'write','REG_OUTPUT',oval))
-        self.q.put_nowait((1,'read','REG_OUTPUT'))
+    def setOutput(self,setval,setmsk):
+        self.q.put_nowait((1,'write','REG_OUTPUT',setval,setmsk))
         return { 'result': 'OK' }
 
-    def setResetMask(self,msk):
-        self.q.put_nowait((2,'write','REG_WDOG_MASK',msk))
-        self.q.put_nowait((2,'read','REG_OUTPUT'))
+    def setResetMask(self,setval,setmsk):
+        self.q.put_nowait((2,'write','REG_WDOG_MASK',setval,setmsk))
         return { 'result': 'OK' }
 
     def printHex(self,v):
@@ -67,12 +56,25 @@ class Device:
     def queueFiller(self):
         keep_running = True
         while keep_running:
-            if self.q.empty():
-                # print('qF() refilling')
-                for reg_name in self.reg_numbers:
-                    x = (10,'read',reg_name)
+            try:
+                if self.q.empty():
+                    x = (10,'readall')
                     self.q.put_nowait(x)
-            yield from asyncio.sleep(2)
+            except Exception as e:
+                print('Exception is Rigminder.queueFiller')
+                print(e)
+            yield from asyncio.sleep(0.250)
+
+    def doUpdateAll(self):
+        rv = self.r.readall()
+        if rv is not None:
+            for reg_name in self.reg_numbers:
+                reg_number = self.reg_numbers[reg_name]
+                reg_value = rv[reg_number]
+                self.device_status['registers'][reg_name] = {
+                    'value': rv[reg_number],
+                    'last_update': datetime.datetime.now(),
+                }
 
     @asyncio.coroutine
     def queueHandler(self):
@@ -80,32 +82,32 @@ class Device:
         print('handleCommands()') 
         while keep_running:
             while True:
-                qi = yield from self.q.get()
-                if qi[1] == 'read':
-                    reg_name = qi[2]
-                    rv = wdog.getWord(self.reg_numbers[reg_name])
-                    print(reg_name)
-                    self.printHex(rv)
-                    if rv['cmd'] == 0:
-                        self.device_status['registers'][reg_name] = {
-                            'value': rv['val'],
-                            'last_update': datetime.datetime.now(),
-                        }
-                elif qi[1] == 'write':
-                    print(qi)
-                    reg_name = qi[2]
-                    reg_val = qi[3]
-                    wdog.setWord(self.reg_numbers[reg_name],reg_val)
+                try:
+                    qi = yield from self.q.get()
+                    # print(qi)
+                    if qi[1] == 'readall':
+                        self.doUpdateAll()
 
-                    rv = wdog.getWord(self.reg_numbers[reg_name])
-                    self.printHex(rv)
-                    if rv['cmd'] == 0:
-                        self.device_status['registers'][reg_name] = {
-                            'value': rv['val'],
-                            'last_update': datetime.datetime.now(),
-                        }
+                    elif qi[1] == 'write':
+                        reg_name = qi[2]
+                        reg_val = qi[3]
+
+                        new_val = reg_val
+                        if len(qi) == 5:
+                            reg_msk = qi[4]
+                        if reg_msk is not None:
+                            old_val = self.device_status['registers'][reg_name].get('value',0)
+                            new_val = old_val & ~reg_msk
+                            new_val |= reg_val & reg_msk
+                        self.r.setWord(self.reg_numbers[reg_name],new_val)
+                        self.doUpdateAll()
+                except Exceptin as e:
+                    print('Exception in Rigminder.queueHandler')
+                    print(e)
 
                 yield from asyncio.sleep(0.05)
+                
+
 
  
 

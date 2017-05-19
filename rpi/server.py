@@ -15,7 +15,6 @@ import random
 import Rigminder as rm
 #import FakeRigminder as rm
 
-
 MAX_QUERY_LEN = 1024
 
 
@@ -92,7 +91,6 @@ class myHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         global MAX_QUERY_LEN
-        print('POST')
 
         odata = { 'result': 'FAIL' }
         rcode = 500
@@ -115,7 +113,7 @@ class myHandler(BaseHTTPRequestHandler):
                 return
 
             if up.path == '/timer':
-                print('/timer')
+                print('POST /timer')
                 args = self.getMessage()
                 print(args)
                 res = device.resetTimer(int(args['timer_val']))
@@ -124,17 +122,19 @@ class myHandler(BaseHTTPRequestHandler):
                 return
 
             if up.path == '/setoutput':
-                print('/setoutput')
+                print('POST /setoutput')
                 args = self.getMessage()
-                res = device.setOutput(int(args['set_val']))
+                print(args)
+                res = device.setOutput(int(args['set_val']),int(args['msk_val']))
                 res['server_access_time'] = datetime.datetime.now()
                 self.send_resp(200,res)
                 return
 
             if up.path == '/setresetmask':
-                print('/setresetmask')
+                print('POST /setresetmask')
                 args = self.getMessage()
-                res = device.setResetMask(int(args['set_val']))
+                print(args)
+                res = device.setResetMask(int(args['set_val']),int(args['msk_val']))
                 res['server_access_time'] = datetime.datetime.now()
                 self.send_resp(200,res)
                 return
