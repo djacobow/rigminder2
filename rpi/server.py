@@ -13,10 +13,15 @@ import asyncio
 import itertools
 import random
 import Rigminder as rm
+import string
+
 #import FakeRigminder as rm
 
 MAX_QUERY_LEN = 1024
 
+server_params = {
+    'secret': 'Doodlebug',
+}
 
 def call_in_background(target, *, loop=None, executor=None):
     if loop is None:
@@ -38,6 +43,7 @@ class myHandler(BaseHTTPRequestHandler):
     }
 
     BaseHTTPRequestHandler.filecache = {}
+
 
     def send_resp(self,rcode,odata):
         mimetype = 'application/json'
@@ -89,6 +95,14 @@ class myHandler(BaseHTTPRequestHandler):
 
 
 
+    def validatePermission(self,args):
+        asessID = args.get('sessID','')
+        aSecret = args.get('secret','')
+        sessID  = self.server.ctx.get('sessID','__')
+        Secret  = self.server.ctx.get('secret','__')
+        return (asessID == sessID) and (aSecret == Secret)
+
+
     def do_POST(self):
         global MAX_QUERY_LEN
 
@@ -112,10 +126,23 @@ class myHandler(BaseHTTPRequestHandler):
                 self.send_resp(rcode,odata)
                 return
 
+            args = self.getMessage()
+
+            if not self.validatePermission(args):
+                print('-E- No permission.')
+                self.send_resp(rcode,odata)
+                return
+
+
+            if up.path == '/changeid':
+                print('POST /changeid') 
+                self.server.genSessID()
+                res = { 'result': 'OK' }
+                self.send_resp(200,res)
+                return
+
             if up.path == '/timer':
                 print('POST /timer')
-                args = self.getMessage()
-                print(args)
                 res = device.resetTimer(int(args['timer_val']))
                 res['server_access_time'] = datetime.datetime.now()
                 self.send_resp(200,res)
@@ -123,8 +150,6 @@ class myHandler(BaseHTTPRequestHandler):
 
             if up.path == '/setoutput':
                 print('POST /setoutput')
-                args = self.getMessage()
-                print(args)
                 res = device.setOutput(int(args['set_val']),int(args['msk_val']))
                 res['server_access_time'] = datetime.datetime.now()
                 self.send_resp(200,res)
@@ -132,8 +157,6 @@ class myHandler(BaseHTTPRequestHandler):
 
             if up.path == '/setresetmask':
                 print('POST /setresetmask')
-                args = self.getMessage()
-                print(args)
                 res = device.setResetMask(int(args['set_val']),int(args['msk_val']))
                 res['server_access_time'] = datetime.datetime.now()
                 self.send_resp(200,res)
@@ -176,6 +199,7 @@ class myHandler(BaseHTTPRequestHandler):
             if up.path == '/status':
                 status = device.readStatus()
                 status['server_access_time'] = datetime.datetime.now()
+                status['sessID'] = self.server.ctx['sessID']
                 self.send_resp(200,status)
                 return
 
@@ -188,8 +212,7 @@ class myHandler(BaseHTTPRequestHandler):
         return
 
 
-
-def keep_server_up(port, handler):
+def keep_server_up(port, handler, ctx):
     print('keep_server_up')
     keep_going = True
     while keep_going:
@@ -198,7 +221,16 @@ def keep_server_up(port, handler):
             #Create a web server and define the handler to manage the
             #incoming request
             print('create server')
-            server = HTTPServer(('', port), handler)
+            class MyServer(HTTPServer):
+                def genSessID(self):
+                    self.ctx['sessID'] = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+
+                def __init__(self, *args, **kw):
+                    HTTPServer.__init__(self, *args, **kw)
+                    self.ctx = ctx
+                    self.genSessID()
+
+            server = MyServer(('', port), handler)
             print('Started httpserver on port ' , port)
     
             #Wait forever for incoming htto requests
@@ -224,8 +256,9 @@ def json_serial(obj):
     raise TypeError ("Type not serializable")
 
 def server_wrap():
+    global server_params
     try:
-        keep_server_up(8003,myHandler)
+        keep_server_up(8003,myHandler,server_params)
     except Exception as e:
         print(e)
 

@@ -40,3 +40,9 @@ body.out_of_contact {
     color: #404040;
      background: #303030;
 }
+
+span.sessID {
+    color: black;
+    background: #404040;
+    font-size: 75%;
+}

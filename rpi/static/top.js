@@ -36,6 +36,11 @@ var showStatus = function(d) {
     var timer_value = d.registers.REG_TIMER.value;
     document.getElementById('dbg').innerText = JSON.stringify(d,null,2);
 
+    var sidelem = document.getElementById('sessID');
+    var sid = sidelem.innerText;
+    if (!sid.length) {
+        sidelem.innerText = d['sessID']
+    } 
     var groups = {
         'output_bits_': 'REG_OUTPUT',
         'mask_bits_': 'REG_WDOG_MASK',
@@ -111,9 +116,14 @@ var showStatus = function(d) {
 
 
 var postAndDo = function(url,data,cb) {
+
+    data.sessID = document.getElementById('sessID').innerText;
+    data.secret = 'Doodlebug';
+
     var xhr = new XMLHttpRequest();
     var loadListener = function() {
         if (xhr.status === 200) {
+            console.log(xhr.responseText)
             var d = JSON.parse(xhr.responseText);
             return cb(d);
         } else {
@@ -141,6 +151,15 @@ var showResetTimerResult = function(d) {
     }
 };
 
+
+var changeSessID = function() {
+    var send_obj = {};
+    postAndDo('/changeid',send_obj, function() {
+        document.getElementById('sessID').innerText = '';
+        fetchStatus();
+    });
+
+}
 var resetTimer = function() {
     var send_obj = {
         'timer_val': parseInt(document.getElementById('wdog_reset_timer_val').value),
@@ -239,6 +258,8 @@ var createOutputCheckboxes = function() {
 var init = function() {
     createOutputCheckboxes();
     document.getElementById('wdog_reset').addEventListener('click',resetTimer);
+    document.getElementById('changeSessId').addEventListener('click',changeSessID);
+ 
     fetchStatusWrapper();
 
 };
