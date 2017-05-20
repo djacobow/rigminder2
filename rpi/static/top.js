@@ -1,10 +1,10 @@
 
 var config = {
     bitpositions: {
-        'dc':  [ 0x1, '12V DC output' ],
-        'ac':  [ 0x2, 'AC Triac output' ],
-        'oc':  [ 0x4, 'Isolated Open Collector Output' ],
-        'led': [ 0x8, 'LED Indicator' ],
+        'dc':  [ 0x1, '12V DC' ],
+        'ac':  [ 0x2, 'AC' ],
+        'oc':  [ 0x4, 'Open Collector Output' ],
+        'led': [ 0x8, 'LED' ],
     },
     voltage_ratios: {
         vin: 14.07 / 959,
@@ -231,7 +231,7 @@ var createOutputCheckboxes = function() {
         var nelems = [];
         var tgtdiv = document.getElementById(groups[k][0]);
         bpids.forEach(function(bpid) {
-            var cb = document.createElement('div');
+            var cb = document.createElement('span');
             cb.id = groups[k][1] + bpid;
             cb.classList.add('fake_button');
             cb.classList.add('fake_button_unknown');
@@ -244,7 +244,7 @@ var createOutputCheckboxes = function() {
                 ev.target.style['border-color'] = 'grey';
             });
             // var sp = document.createElement('span');
-            var br = document.createElement('br');
+            // var br = document.createElement('br');
             cb.innerText = config.bitpositions[bpid][1];
             nelems.push(cb);
             // nelems.push(sp);
@@ -259,6 +259,14 @@ var init = function() {
     createOutputCheckboxes();
     document.getElementById('wdog_reset').addEventListener('click',resetTimer);
     document.getElementById('changeSessId').addEventListener('click',changeSessID);
+    document.getElementById('toggle_debug').addEventListener('click',function(ev) {
+        var ddiv = document.getElementById('debugging_below_here');
+        if (ddiv.style.display == 'none') {
+            ddiv.style.display = 'block';
+        } else {
+            ddiv.style.display = 'none';
+        }
+    });
  
     fetchStatusWrapper();
 

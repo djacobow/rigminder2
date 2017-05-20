@@ -5,8 +5,12 @@ body {
  font-family: Arial, Helvetica, sans-serif;
 }
 
+.barholder {
+    height: 80px;
+}
 div.all_bar {
     width: 100%;
+    height: 30px;
     background-color: grey;
 }
 
@@ -16,7 +20,11 @@ div.val_bar {
     height: 30px;
 }
 
-div.fake_button {
+.buttonsholder {
+    height: 50px;
+}
+
+.fake_button {
     padding: 10px;
     margin: 5px;
     border: 3px solid grey;
@@ -24,15 +32,15 @@ div.fake_button {
     border-color: grey;
 
 }
-div.fake_button_unchecked {
+.fake_button_unchecked {
     background-color: red;
 }
 
-div.fake_button_checked {
+.fake_button_checked {
     background-color: green;
 }
 
-div.fake_button_unknown {
+.fake_button_unknown {
     background-color: yellow;
 }
 
@@ -46,3 +54,13 @@ span.sessID {
     background: #404040;
     font-size: 75%;
 }
+
+.resetbutton {
+    font-size: 150%;
+}
+
+.numberinput {
+   width: 3em;
+}
+
+
