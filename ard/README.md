@@ -24,3 +24,16 @@ set the built in "fuses" to use the external crystal oscillator.
 Another option is to use the internal oscillator, but set it to
 8MHz. To do this, you will have to set fuses directly using avrdude.
 Do not burn the bootloader, as this will reset your fuses.
+
+## How it works
+
+The ard software itself could not be simpler (intentionally so as
+to have few bugs). A bunch of registers are mapped to an i2c address.
+The device essentially acts as nothing more or less than a handful
+of read/write registers. One of those registers sets which bits of
+output are "on." Another one sets how long before the watchdog goes
+off. Another sets what happens when the watchdog does go off. That,
+and a few read-only registers to get the input DC voltage, are about
+all she wrote. There are a few more registers implementd, but they 
+do not do anything at this time.
+
