@@ -27,3 +27,11 @@ get everything working, but they should get your started. I have successfully
 controlled and used my IC-7300 to make QSOs from work using the commands
 herein.
 
+## rsba1 restarter
+
+I've got an Icom rig and I am also experimenting with Icom's software,
+RS-BA1. It works OK when it works, but if something goes wrong, it
+becomes very cranky won't work again until it is restarted. This little
+server, which can also be made publicly available on the webz through a 
+port forward, allows me to restart the RS-BA1 software remotely. There
+is no security, however, so definitely beware!
