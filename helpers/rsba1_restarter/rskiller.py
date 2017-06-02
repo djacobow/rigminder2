@@ -9,6 +9,7 @@ import string
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 import re
+import subprocess
 
 PORT = 8004
 
@@ -21,7 +22,7 @@ def killAll(name):
 
 def taskStart(path):
     print("Starting " + path)
-    os.startfile(path)
+    subprocess.Popen([path], shell=True)
 
 
 
@@ -174,7 +175,7 @@ class myHandler(BaseHTTPRequestHandler):
                 if tok == self.server.ctx['sessID'] and secret == self.server.ctx['secret']:
                     rcode = 200
                     odata = { 'result': 'OK', 'msg': 'start attempted' }
-                    taskStart("C:\Program Files (x86)\Icom\RS-BA1\RemoteUtility\RemoteUty.exe")
+                    taskStart("C:\\Program Files (x86)\\Icom\\RS-BA1\\RemoteUtility\\RemoteUty.exe")
                 else:
                     pass
 
@@ -221,5 +222,5 @@ if __name__ == '__main__':
         'max_query_len': 64 * 1024,
         'secret': 'Beeblebrox',
     } 
-    start_server(8004, myHandler, args)
+    start_server(50004, myHandler, args)
 
