@@ -53,6 +53,7 @@ var tryIt = function(tok, what) {
 var setup = function() {
  var kb = document.getElementById('killit');
  var sb = document.getElementById('startit');
+ var rb = document.getElementById('rebootit');
  kb.addEventListener('click', function() {
      getTok(function(tok) {
          tryIt(tok,'/killit');
@@ -61,6 +62,11 @@ var setup = function() {
  sb.addEventListener('click', function() {
      getTok(function(tok) {
          tryIt(tok,'/startit');
+     });
+ });
+ rb.addEventListener('click', function() {
+     getTok(function(tok) {
+         tryIt(tok,'/rebootit');
      });
  });
 }

@@ -24,6 +24,11 @@ def taskStart(path):
     print("Starting " + path)
     subprocess.Popen([path], shell=True)
 
+def reboot():
+    print("Rebooting")
+    args = ["C:\\Windows\\System32\\shutdown.exe", "/r", '/f', '/t', '30']
+    print(args)
+    subprocess.Popen(args, shell=True)
 
 
 class myHandler(BaseHTTPRequestHandler):
@@ -178,6 +183,17 @@ class myHandler(BaseHTTPRequestHandler):
                     taskStart("C:\\Program Files (x86)\\Icom\\RS-BA1\\RemoteUtility\\RemoteUty.exe")
                 else:
                     pass
+
+            if up.path == '/rebootit':
+                tok = args.get('token',None)
+                secret = args.get('secret',None)
+                if tok == self.server.ctx['sessID'] and secret == self.server.ctx['secret']:
+                    rcode = 200
+                    odata = { 'result': 'OK', 'msg': 'reboot scheduled' }
+                    reboot()
+                else:
+                    pass
+
 
         except Exception as e:
             print('POST exception')
