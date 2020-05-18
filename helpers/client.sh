@@ -4,8 +4,7 @@
 # forward remote 7001 to localhost:7001 -- this will be the serial port
 # forward remote 4713 to localhost:7002 -- this is pulseaudio 
 # forward remote 8003 to localhost:7003 -- this is for the watchdog server
-ssh -N \
-    -X \
+ssh -Y \
     -L 7001:localhost:7001 \
     -L 7002:localhost:4713 \
     -L 7003:localhost:8003 \
