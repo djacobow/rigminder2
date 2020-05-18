@@ -38,6 +38,7 @@ class regfile_c {
             return &(registers[addr]);
         };
         uint32_t update(uint32_t input) {
+            ser->print("input "); ser->println(input,HEX);
             uint8_t cmd = input >> 16;
             uint16_t arg = input & 0xffff;
             uint8_t addr = cmd & (REG_COUNT-1);
@@ -55,7 +56,7 @@ class regfile_c {
                 case 3 : registers[addr] ^= arg; break;
                 default: break;
             }
-            uint32_t rv = (cmd << 16) | registers[addr];
+            uint32_t rv = ((uint32_t)cmd << 16) | registers[addr];
             if (ser) { ser->print("RF return: "); ser->println(rv,HEX); }
             return rv;
         }
