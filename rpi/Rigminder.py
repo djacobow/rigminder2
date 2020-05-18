@@ -17,9 +17,12 @@ class Device:
 
         self.reg_numbers = {
            'REG_VIN': 0,
-           'REG_VOUT': 1,
-           'REG_OUTPUT': 6,
+           'REG_VOUT0': 1,
+           'REG_VOUT1': 2,
+           'REG_IOUT0': 3,
+           'REG_IOUT1': 4,
            'REG_WDOG_MASK': 5,
+           'REG_OUTPUT': 6,
            'REG_TIMER': 7,
         }
 
@@ -29,7 +32,8 @@ class Device:
             'count': 0,
             'registers': {
                 'REG_VIN': {},
-                'REG_VOUT': {},
+                'REG_VOUT0': {},
+                'REG_VOUT1': {},
                 'REG_OUTPUT': {},
                 'REG_WDOG_MASK': {},
                 'REG_TIMER': {},
@@ -101,7 +105,7 @@ class Device:
                             new_val |= reg_val & reg_msk
                         self.r.setWord(self.reg_numbers[reg_name],new_val)
                         self.doUpdateAll()
-                except Exceptin as e:
+                except Exception as e:
                     print('Exception in Rigminder.queueHandler')
                     print(e)
 

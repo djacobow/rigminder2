@@ -1,16 +1,54 @@
 
 var config = {
     bitpositions: {
-        'dc':  [ 0x1, '12V DC' ],
-        'ac':  [ 0x2, 'AC' ],
-        'oc':  [ 0x4, 'Open Collector Output' ],
-        'led': [ 0x8, 'LED' ],
+        'dc0': [ 0x1, 'Output 0' ],
+        'dc1': [ 0x2, 'Output 1' ],
+        'oc0': [ 0x4, 'Open Collector 0' ],
+        'oc1': [ 0x8, 'Open Colection 1' ],
     },
-    voltage_ratios: {
-        vin: 14.07 / 959,
-        vout: 14.07 / 959,
-        warn_hi: 13.8 * 1.1,
-        warn_lo: 13.8 * 0.9,
+    ratios: {
+        vin: {
+            m: 14.07 / 959,
+            y: 0,
+            u: 'v',
+            w_hi: 13.8 * 1.1,
+            w_lo: 13.8 * 0.9,
+            max: 13.8 * 1.1,
+        },
+        vout0: {
+            m: 14.07 / 959,
+            y: 0,
+            u: 'v',
+            w_hi: 13.8 * 1.1,
+            w_lo: 13.8 * 0.9,
+            max: 13.8 * 1.1,
+        },
+        vout1: {
+            m: 14.07 / 959,
+            y: 0,
+            u: 'v',
+            w_hi: 13.8 * 1.1,
+            w_lo: 13.8 * 0.9,
+            max: 13.8 * 1.1,
+        },
+        iout0: {
+            m: 162.88,
+            y: -1629.96,
+            min: 0,        
+            u: 'ma',
+            w_hi: 30,
+            w_lo: 0,
+            max: 0x3ff,
+        },
+        iout1: {
+            m: 162.88,
+            y: -1629.96,
+            min: 0,        
+            u: 'ma',
+            w_hi: 30,
+            w_lo: 0,
+            max: 0x3ff,
+        },
     },
 };
 
@@ -75,19 +113,28 @@ var showStatus = function(d) {
 
     var voltages = {
         vin: 'REG_VIN',
-        vout: 'REG_VOUT',
+        vout0: 'REG_VOUT0',
+        vout1: 'REG_VOUT1',
+        iout0: 'REG_IOUT0',
+        iout1: 'REG_IOUT1',
     };
 
     Object.keys(voltages).forEach(function(v) {
-        var value = d.registers[voltages[v]].value & 0x3ff;
-        var volts = Math.floor((value * config.voltage_ratios[v]) * 10) / 10;
+        var raw_value = d.registers[voltages[v]].value & 0x3ff;
+        var ratio = config.ratios[v];
+        var value = raw_value * ratio['m'] + ratio['y']
+        if (('min' in ratio) && (value < ratio['min'])) {
+            value = ratio['min'];
+        }
+        value = Math.floor((value * 10) / 10);
         var bdiv  = document.getElementById(v + '_bar');
-        colorizeBar(bdiv,volts,
-            'green',
-            config.voltage_ratios.warn_lo,'yellow',
-            config.voltage_ratios.warn_hi,'yellow');
-        drawProgress(bdiv,value,1023);
-        document.getElementById(v + '_val').innerText = volts.toString() + ' V';
+        colorizeBar(
+            bdiv, value, 'green',
+            ratio['w_lo'],'yellow',
+            ratio['w_hi'],'yellow')
+        drawProgress(bdiv,value,ratio['max']);
+        document.getElementById(v + '_val').innerText =
+            value.toString() + ' ' + ratio['u'];
     });
 
 
@@ -202,6 +249,7 @@ var fetchStatus = function() {
                 showStatus(d);
             } catch (e) {
                 console.warn('That went poorly.');
+                console.warn(e);
                 console.warn(xhr.responseText);
                 document.getElementById('dbg').innerText = xhr.responseText;
             }
